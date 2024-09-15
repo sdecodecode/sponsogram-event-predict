@@ -74,7 +74,10 @@ def analyze_with_llama(prompt):
         )
 
         return (chat_completion.choices[0].message.content)
-    
+    except Exception as e:
+        logger.error(f"Error in Llama analysis: {e}")
+        return f"An error occurred while querying the model: {e}"
+      
 TEAL = colors.Color(0.235, 0.561, 0.541)
 BACKGROUND_GRAY = colors.Color(0.941, 0.941, 0.941)
 
