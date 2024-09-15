@@ -60,14 +60,20 @@ def categorize_roi(scaled_roi):
 @celery.task
 def analyze_with_llama(prompt):
     try:
-        response = ollama.chat(
-            model="llama3.1",
-            messages=[{"role": "user", "content": prompt}]
+        client = Groq(
+        api_key=os.getenv("GROQ_API_KEY"),
         )
-        return response["message"]["content"]
-    except Exception as e:
-        logger.error(f"Error in Llama analysis: {e}")
-        return f"An error occurred while querying the model: {e}"
+        chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        model="llama-3.1-8b-instant",
+        )
+
+        return (chat_completion.choices[0].message.content)
     
 TEAL = colors.Color(0.235, 0.561, 0.541)
 BACKGROUND_GRAY = colors.Color(0.941, 0.941, 0.941)
