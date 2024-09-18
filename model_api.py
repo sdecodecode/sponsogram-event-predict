@@ -7,10 +7,8 @@ app = Flask(__name__)
 CORS(app) 
 
 
-with open('sponsor_roi_model.pkl', 'rb') as f:
-    model = pickle.load(f)
-with open('scaler1.pkl', 'rb') as f:
-    scaler = pickle.load(f)
+model = joblib.load('sponsor_roi_model.pkl')
+scaler = joblib.load('scaler1.pkl')
 
 @app.route('/predict', methods=['POST'])
 def predict():
