@@ -33,14 +33,10 @@ def predict():
     return jsonify({"predicted_revenue": float(predicted_revenue), "roi": float(roi), "scaled_roi": float(scaled_roi)})
 
 
-@app.route('/test', methods=['GET'])
-def api_test():
-    response_data = {
-        'message': 'Model API is working fine :)',
-        'success': 'true',
-        'status': 200,
-    }
-    return jsonify(response_data), 200
+# Health Check Endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
 
 
 if __name__ == '__main__':

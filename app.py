@@ -152,14 +152,10 @@ def generate_report(task_id):
         return jsonify({'state': task.state, 'message': 'Report is not ready yet.'}), 202
 
 
-@app.route('/test', methods=['GET'])
-def api_test():
-    response_data = {
-        "status": 200,
-        "success": True,
-        "message": "API is working",
-    }
-    return jsonify(response_data), 200
+# Health Check Endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
 
 
 if __name__ == '__main__':
