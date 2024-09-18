@@ -1,25 +1,23 @@
-import numpy as np
-import pandas as pd
-import logging
-import joblib
+from celery import Celery
+from datetime import datetime
+from dotenv import load_dotenv
+from groq import Groq
 from io import BytesIO
-import tempfile
-import os
-import matplotlib.pyplot as plt
+from PyPDF2 import PdfWriter, PdfReader
+from reportlab.graphics.shapes import Drawing, Wedge, Polygon
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Frame, PageBreak
-from reportlab.graphics.shapes import Drawing, Wedge, Polygon
-from PyPDF2 import PdfWriter, PdfReader
-from datetime import datetime
 import math
-from celery import Celery
-from groq import Groq
-from dotenv import load_dotenv
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import pandas as pd
 import requests
+import tempfile
 
 
 load_dotenv()
@@ -28,14 +26,11 @@ model_api = 'https://sponsogram-event-predict-model.onrender.com/predict'
 
 # Initialize Celery with environment variable for Redis
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-celery = Celery('tasks',
-                    broker=REDIS_URL,
-                    backend=REDIS_URL)
+celery = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 
 # Load model and scaler
 # MODEL_PATH = os.getenv('MODEL_PATH', 'sponsor_roi_model.pkl')
 # SCALER_PATH = os.getenv('SCALER_PATH', 'scaler1.pkl')
-
 
 
 # try:
@@ -383,13 +378,10 @@ def make_prediction(data):
         # input_df = pd.DataFrame([input_features])
 
         # predicted_revenue, roi, scaled_roi = predict_roi(input_df)
-        
-
-
 
         try:
             response = requests.post(model_api, json=input_features)
-            response.raise_for_status()  
+            response.raise_for_status()
             prediction_data = response.json()
 
             predicted_revenue = prediction_data['prediction_revenue']
@@ -403,7 +395,8 @@ def make_prediction(data):
 
         roi_category = categorize_roi(roi)
 
-        llama_output, merged_buffer = generate_pdf(data, roi, scaled_roi, roi_category)
+        llama_output, merged_buffer = generate_pdf(
+            data, roi, scaled_roi, roi_category)
 
         result = {
             'prediction_revenue': float(predicted_revenue),
