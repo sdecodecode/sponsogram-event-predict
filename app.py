@@ -1,10 +1,9 @@
-from flask import Flask, request, jsonify, send_file
-from tasks import make_prediction, generate_pdf, celery
 from celery.result import AsyncResult
-from io import BytesIO
-import redis  # Import redis
-import base64  # For optional Base64 encoding
+from flask import Flask, request, jsonify
+from tasks import make_prediction, generate_pdf, celery
+import base64
 import os
+import redis
 
 app = Flask(__name__)
 
@@ -16,6 +15,7 @@ app = Flask(__name__)
 # Adjust host and port if your Redis server is running elsewhere
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 redis_client = redis.Redis.from_url(REDIS_URL)
+
 
 def validate_input(data):
     required_fields = [
@@ -38,6 +38,7 @@ def validate_input(data):
         return False, 'Invalid type for one of the numeric fields'
 
     return True, None
+
 
 @app.route('/predict', methods=['GET'])
 def get_prediction():
@@ -62,13 +63,14 @@ def get_prediction():
         # logger.error(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/task/<task_id>', methods=['GET'])
 def get_task_status(task_id):
     # logger.info("Received status request for Task ID: %s", task_id)
 
     # Check if the task_id exists in the 'known_tasks' set
     task_exists = redis_client.sismember('known_tasks', task_id)
-    
+
     if not task_exists:
         return jsonify({'state': 'UNKNOWN', 'error': 'Task ID does not exist.'}), 404
 
@@ -88,13 +90,14 @@ def get_task_status(task_id):
     else:
         return jsonify({'state': task.state, 'message': 'Task is in progress.'}), 202
 
+
 @app.route('/generate-report/<task_id>', methods=['GET'])
 def generate_report(task_id):
     # logger.info("Received generate report request for Task ID: %s", task_id)
 
     # Check if the task_id exists in the 'known_tasks' set
     task_exists = redis_client.sismember('known_tasks', task_id)
-    
+
     if not task_exists:
         return jsonify({'state': 'UNKNOWN', 'error': 'Task ID does not exist.'}), 404
 
@@ -103,7 +106,8 @@ def generate_report(task_id):
 
     if task.state == 'SUCCESS':
         result = task.result
-        llama_output, merged_buffer = generate_pdf(result, result['roi_category'])
+        llama_output, merged_buffer = generate_pdf(
+            result, result['roi_category'])
 
         if merged_buffer:
             try:
@@ -117,9 +121,9 @@ def generate_report(task_id):
                 #     download_name='event_report.pdf',
                 #     mimetype='application/pdf'
                 # )
-                
+
                 # Option 2: Return PDF as Base64 (commented out)
-                
+
                 pdf_data = merged_buffer.getvalue()
                 pdf_base64 = base64.b64encode(pdf_data).decode('utf-8')
 
@@ -129,7 +133,7 @@ def generate_report(task_id):
                     'pdf_data': pdf_base64  # Base64-encoded PDF
                 }
                 return jsonify(response), 200
-                
+
             except Exception as e:
                 # logger.exception("Error generating PDF")
                 return jsonify({'error': f'Error generating PDF: {str(e)}'}), 500
@@ -147,6 +151,7 @@ def generate_report(task_id):
     else:
         return jsonify({'state': task.state, 'message': 'Report is not ready yet.'}), 202
 
+
 @app.route('/test', methods=['GET'])
 def api_test():
     response_data = {
@@ -155,6 +160,7 @@ def api_test():
         "message": "API is working",
     }
     return jsonify(response_data), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
