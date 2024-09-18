@@ -45,7 +45,6 @@ def get_prediction():
     try:
         # logger.info("Received prediction request")
         data = request.args.to_dict()
-        # logger.debug(f"Received data: {data}")
 
         # Synchronous validation
         is_valid, error_message = validate_input(data)
@@ -60,7 +59,6 @@ def get_prediction():
 
         return jsonify({'task_id': task_id}), 202
     except Exception as e:
-        # logger.error(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -107,7 +105,7 @@ def generate_report(task_id):
     if task.state == 'SUCCESS':
         result = task.result
         llama_output, merged_buffer = generate_pdf(
-            result, result['roi_category'])
+            result, result['roi'], result['scaled_roi'], result['roi_category'])
 
         if merged_buffer:
             try:
@@ -154,9 +152,9 @@ def generate_report(task_id):
 
 # Health Check Endpoint
 @app.route('/health', methods=['GET'])
-def health():
-    return jsonify({"status": "healthy"})
+def health_check():
+    return jsonify({"status": "healthy"}), 200
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
