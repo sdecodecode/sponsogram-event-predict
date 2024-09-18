@@ -318,8 +318,7 @@ def generate_pdf(data, roi, scaled_roi, roi_category):
         f"Given the following event details:\n"
         f"Event Type: {data['event_type']}\n"
         f"Event Duration: {data['event_duration']} days\n"
-        f"Expected Footfall: {data['expected_min_footfall']} to {
-            data['expected_max_footfall']}\n"
+        f"Expected Footfall: {data['expected_min_footfall']} to {data['expected_max_footfall']}\n"
         f"Ticket Price: {data['ticket_price']} INR\n"
         f"Sponsor Type: {data['sponsor_type']}\n"
         f"Sponsor Cost: {data['sponsor_cost']} INR\n"
