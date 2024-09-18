@@ -28,32 +28,6 @@ model_api = 'https://sponsogram-event-predict-model.onrender.com/predict'
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 celery = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
 
-# Load model and scaler
-# MODEL_PATH = os.getenv('MODEL_PATH', 'sponsor_roi_model.pkl')
-# SCALER_PATH = os.getenv('SCALER_PATH', 'scaler1.pkl')
-
-
-# try:
-#     model = pickle.load(urllib.request.urlopen("https://drive.google.com/file/d/1NnyxG0srXl3QVpfIbLI_Pd_reCbh0HcT"))
-#     scaler = pickle.load(urllib.request.urlopen("https://drive.google.com/file/d/188jNvCnA0QM8VZuHqwdFIQEUQQ7uWq_1"))
-#     # logger.info("Model and scaler loaded successfully.")
-# except Exception as e:
-#     # logger.error(f"Error loading model.scaler: {e}")
-#     raise e
-
-# @celery.task
-# def predict_roi(input_data):
-#     try:
-#         predicted_revenue = model.predict(input_data)[0]
-#         sponsor_cost = input_data['Sponsor Cost'].values[0]
-#         roi = ((predicted_revenue - sponsor_cost) / sponsor_cost) * 100
-#         scaled_roi = scaler.transform([[roi]])[0][0]
-#         return predicted_revenue, roi, scaled_roi
-#     except Exception as e:
-#         # logger.error(f"Error in predict_roi: {e}")
-#         return None, None, None
-
-
 @celery.task
 def categorize_roi(scaled_roi):
     if scaled_roi <= 0.208755:
@@ -96,23 +70,19 @@ styles = getSampleStyleSheet()
 def create_gauge(roi_category, width, height):
     drawing = Drawing(width, height)
     categories = ['Excellent', 'Good', 'Average', 'Below Average', 'Poor']
-    category_colors = [colors.green, colors.limegreen,
-                       colors.yellow, colors.orange, colors.red]
+    category_colors = [colors.green, colors.limegreen, colors.yellow, colors.orange, colors.red]
     category_angles = [36, 72, 108, 144, 180]
 
     for i, (color, end_angle) in enumerate(zip(category_colors, category_angles)):
         start_angle = 0 if i == 0 else category_angles[i-1]
-        section = Wedge(width / 2, height / 2, width / 2,
-                        start_angle, end_angle, fillColor=color)
+        section = Wedge(width / 2, height / 2, width / 2, start_angle, end_angle, fillColor=color)
         drawing.add(section)
 
     angle = category_angles[categories.index(roi_category)] - 18
     needle_length = width / 2 - 20
     needle_end_x = width / 2 + needle_length * math.cos(math.radians(angle))
     needle_end_y = height / 2 + needle_length * math.sin(math.radians(angle))
-    needle = Polygon(points=[width / 2, height / 2, width / 2 - 5, height / 2 + 10,
-                             needle_end_x, needle_end_y, width / 2 + 5, height / 2 + 10],
-                     fillColor=colors.black)
+    needle = Polygon(points=[width / 2, height / 2, width / 2 - 5, height / 2 + 10, needle_end_x, needle_end_y, width / 2 + 5, height / 2 + 10], fillColor=colors.black)
     drawing.add(needle)
     return drawing
 
@@ -166,12 +136,9 @@ def create_report_cover(buffer):
     c.save()
 
 
-title_style = ParagraphStyle(
-    'Title', parent=styles['Title'], fontName='Helvetica-Bold', fontSize=36, textColor=TEAL, spaceAfter=20, leading=40)
-normal_style = ParagraphStyle(
-    'Normal', parent=styles['Normal'], fontName='Helvetica', fontSize=12, leading=14)
-user_input_style = ParagraphStyle(
-    'UserInput', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=14)
+title_style = ParagraphStyle('Title', parent=styles['Title'], fontName='Helvetica-Bold', fontSize=36, textColor=TEAL, spaceAfter=20, leading=40)
+normal_style = ParagraphStyle('Normal', parent=styles['Normal'], fontName='Helvetica', fontSize=12, leading=14)
+user_input_style = ParagraphStyle('UserInput', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=14)
 
 
 @celery.task
@@ -284,20 +251,17 @@ def generate_roi_plot(data, input_df, scaled_roi):
     for cost in sponsor_cost_range:
         temp_input = input_df.copy()
         temp_input['Sponsor Cost'] = cost
-        # _, _, temp_scaled_roi = predict_roi(temp_input)
         roi_categories_cost.append(categorize_roi(scaled_roi))
 
     category_order = ["Poor", "Below Average", "Average", "Good", "Excellent"]
-    category_labels = sorted(set(roi_categories_cost),
-                             key=lambda x: category_order.index(x))
+    category_labels = sorted(set(roi_categories_cost), key=lambda x: category_order.index(x))
     category_to_num = {cat: i for i, cat in enumerate(category_labels)}
     y_numeric = [category_to_num[cat] for cat in roi_categories_cost]
 
     plt.figure(figsize=(10, 5))
     plt.plot(sponsor_cost_range, y_numeric, marker='o')
     for i, category in enumerate(category_labels):
-        plt.hlines(y=i, xmin=sponsor_cost_range[0], xmax=sponsor_cost_range[-1],
-                   colors='blue', linestyles='dashed', alpha=0.5)
+        plt.hlines(y=i, xmin=sponsor_cost_range[0], xmax=sponsor_cost_range[-1], colors='blue', linestyles='dashed', alpha=0.5)
     plt.title("ROI Category vs Sponsor Cost")
     plt.xlabel("Sponsor Cost")
     plt.ylabel("ROI Category")
@@ -347,9 +311,7 @@ def generate_pdf(data, roi, scaled_roi, roi_category):
     create_report_cover(cover_buffer)
 
     content_buffer = BytesIO()
-    generate_content_pages(content_buffer, plot_img_path, input_features['Event Type'], input_features['Event Duration in Days'],
-                           data['expected_min_footfall'], data['expected_max_footfall'], input_features['Ticket Price'],
-                           input_features['Sponsor Type'], input_features['Sponsor Cost'], roi_category, llama_output)
+    generate_content_pages(content_buffer, plot_img_path, input_features['Event Type'], input_features['Event Duration in Days'], data['expected_min_footfall'], data['expected_max_footfall'], input_features['Ticket Price'], input_features['Sponsor Type'], input_features['Sponsor Cost'], roi_category, llama_output)
 
     merged_buffer = merge_pdfs(cover_buffer, content_buffer)
 
@@ -388,8 +350,7 @@ def make_prediction(data):
 
         roi_category = categorize_roi(roi)
 
-        llama_output, merged_buffer = generate_pdf(
-            data, roi, scaled_roi, roi_category)
+        llama_output, merged_buffer = generate_pdf(data, roi, scaled_roi, roi_category)
 
         result = {
             'prediction_revenue': float(predicted_revenue),
