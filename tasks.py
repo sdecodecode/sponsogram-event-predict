@@ -362,35 +362,30 @@ def generate_pdf(data, roi, scaled_roi, roi_category):
 
 @celery.task
 def make_prediction(data):
-    print(data)
     try:
-        print(data)
-        # logger.debug(f"Received data in make_prediction: {data}")
         input_features = {
-            'Event Type': data['event_type'],
-            'Event Duration in Days': int(data['event_duration']),
-            'Expected Footfall': (int(data['expected_max_footfall']) + int(data['expected_min_footfall'])) / 2,
-            'Ticket Price': float(data['ticket_price']),
-            'Sponsor Type': data['sponsor_type'],
-            'Sponsor Cost': float(data['sponsor_cost'])
+            'event_type': data['event_type'],
+            'event_duration': int(data['event_duration']),
+            'expected_min_footfall': int(data['expected_min_footfall']),
+            'expected_max_footfall': int(data['expected_max_footfall']),
+            'ticket_price': float(data['ticket_price']),
+            'sponsor_type': data['sponsor_type'],
+            'sponsor_cost': float(data['sponsor_cost'])
         }
-        # logger.debug(f"Input features: {input_features}")
-        # input_df = pd.DataFrame([input_features])
-
-        # predicted_revenue, roi, scaled_roi = predict_roi(input_df)
 
         try:
             response = requests.post(model_api, json=input_features)
             response.raise_for_status()
             prediction_data = response.json()
 
-            predicted_revenue = prediction_data['prediction_revenue']
+            predicted_revenue = prediction_data['predicted_revenue']
             roi = prediction_data['roi']
             scaled_roi = prediction_data['scaled_roi']
 
             roi_category = categorize_roi(scaled_roi)
-        except requests.exceptions.RequestException as e:
+
             # Handle any errors in the API call
+        except requests.exceptions.RequestException as e:
             return {'error': f'API call failed: {str(e)}'}
 
         roi_category = categorize_roi(roi)
