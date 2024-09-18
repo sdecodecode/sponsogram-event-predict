@@ -211,8 +211,7 @@ def generate_content_pages(buffer, plot1_img_path, event_type, event_duration, e
 
     str_roi = [
         "The expected ROI for the Sponsor is calculated based on the costs incurred and the revenue generated.",
-        f"With an investment of Rs. {
-            sponsor_cost} in sponsorship and advertising, the expected revenue is estimated to be '{roi_category}'."
+        f"With an investment of Rs. {sponsor_cost} in sponsorship and advertising, the expected revenue is estimated to be '{roi_category}'."
     ]
 
     for line in str_roi:
