@@ -1,11 +1,13 @@
 from celery.result import AsyncResult
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from tasks import make_prediction, generate_pdf, celery
 import base64
 import os
 import redis
 
 app = Flask(__name__)
+CORS(app)
 
 # Configure logging
 # logging.basicConfig(level=logging.DEBUG)
