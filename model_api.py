@@ -6,7 +6,7 @@ import bz2file as bz2
 import pickle
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 
 # Load model and scaler
